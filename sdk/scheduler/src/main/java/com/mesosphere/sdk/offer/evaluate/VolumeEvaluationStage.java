@@ -25,6 +25,7 @@ public class VolumeEvaluationStage implements OfferEvaluationStage {
     private final String taskName;
     private final Optional<String> resourceId;
     private final boolean useDefaultExecutor;
+    private final Optional<String> sourceRoot;
 
     public static VolumeEvaluationStage getNew(VolumeSpec volumeSpec, String taskName, boolean useDefaultExecutor) {
         return new VolumeEvaluationStage(
@@ -63,6 +64,7 @@ public class VolumeEvaluationStage implements OfferEvaluationStage {
         this.taskName = taskName;
         this.resourceId = resourceId;
         this.persistenceId = persistenceId;
+        this.sourceRoot = sourceRoot;
         this.useDefaultExecutor = useDefaultExecutor;
     }
 
@@ -76,14 +78,6 @@ public class VolumeEvaluationStage implements OfferEvaluationStage {
                && mesosResource.getResource().getDisk().getSource().hasType()
                && mesosResource.getResource().getDisk().getSource().getType()
                .equals(Resource.DiskInfo.Source.Type.MOUNT);
-    }
-
-    private String getSourceRoot(MesosResource mesosResource) {
-        if (isMountVolume(mesosResource)) {
-            return mesosResource.getResource().getDisk().getSource().getMount().getRoot();
-        } else {
-            return null;
-        }
     }
 
     @Override
@@ -101,13 +95,11 @@ public class VolumeEvaluationStage implements OfferEvaluationStage {
             // add it to the ExecutorInfo.
             podInfoBuilder.setExecutorVolume(volumeSpec);
 
-            String sourceRoot = null;
-
             Resource volume = PodInfoBuilder.getExistingExecutorVolume(
                     volumeSpec,
                     resourceId,
                     persistenceId,
-                    Optional.ofNullable(sourceRoot),
+                    sourceRoot,
                     useDefaultExecutor);
             podInfoBuilder.getExecutorBuilder().get().addResources(volume);
 
